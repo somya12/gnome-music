@@ -4,14 +4,11 @@
   <object class="GtkHBox" id="AlbumWidget">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="homogeneous">True</property>
     <child>
       <object class="GtkHBox" id="albumInfo">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="halign">end</property>
-        <property name="margin_left">32</property>
-        <property name="margin_right">32</property>
         <property name="margin_top">64</property>
         <property name="margin_bottom">32</property>
         <property name="vexpand">True</property>
@@ -194,6 +191,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">start</property>
+            <property name="margin_left">16</property>
             <property name="hexpand">True</property>
             <child>
               <placeholder/>

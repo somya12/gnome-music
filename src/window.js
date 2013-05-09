@@ -21,6 +21,7 @@
 const Lang = imports.lang;
 const Gtk = imports.gi.Gtk;
 const Gd = imports.gi.Gd;
+const Gdk = imports.gi.Gdk;
 const GLib = imports.gi.GLib;
 
 const Gettext = imports.gettext;
@@ -41,8 +42,8 @@ const MainWindow = new Lang.Class({
             window_position: Gtk.WindowPosition.CENTER,
             hide_titlebar_when_maximized: true
         });
-
-        this.set_size_request(887, 640);
+        var screen = Gdk.Screen.get_default()
+        this.set_size_request((screen.get_width()/2) - 20, 640);
         this._setupView();
     },
 
