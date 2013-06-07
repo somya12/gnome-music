@@ -39,59 +39,6 @@ const albumArtCache = AlbumArtCache.AlbumArtCache.getDefault();
 const nowPlayingIconName = 'media-playback-start-symbolic';
 const errorIconName = 'dialog-error-symbolic';
 
-const LoadMoreButton = new Lang.Class({
-    Name: 'LoadMoreButton',
-    _init: function(counter) {
-        this._block = false;
-        this._counter = counter;
-        let child = new Gtk.Grid({ column_spacing: 10,
-                                   hexpand: false,
-                                   halign: Gtk.Align.CENTER,
-                                   visible: true });
-
-        this._spinner = new Gtk.Spinner({ halign: Gtk.Align.CENTER,
-                                          no_show_all: true });
-        this._spinner.set_size_request(16, 16);
-        child.add(this._spinner);
-
-        this._label = new Gtk.Label({ label: "Load More",
-                                      visible: true });
-        child.add(this._label);
-
-        this.widget = new Gtk.Button({ no_show_all: true,
-                                       child: child });
-        this.widget.get_style_context().add_class('documents-load-more');
-        this.widget.connect('clicked', Lang.bind(this,
-            function() {
-                this._label.label = "Loading...";
-                this._spinner.show();
-                this._spinner.start();
-            }));
-
-        this._onItemCountChanged();
-    },
-
-    _onItemCountChanged: function() {
-        let remainingDocs = this._counter();
-        let visible = !(remainingDocs <= 0 || this._block);
-        this.widget.set_visible(visible);
-
-        if (!visible) {
-            this._label.label = "Load More";
-            this._spinner.stop();
-            this._spinner.hide();
-        }
-    },
-
-    setBlock: function(block) {
-        if (this._block == block)
-            return;
-
-        this._block = block;
-        this._onItemCountChanged();
-    }
-});
-
 const AlbumWidget = new Lang.Class({
     Name: "AlbumWidget",
     Extends: Gtk.EventBox,
@@ -422,9 +369,8 @@ const AllArtistsAlbums = new Lang.Class({
         this.parent("All Artists", [], player);
         this._offset = 0;
         this.countQuery = Query.album_count;
-        this._loadMore = new LoadMoreButton(Lang.bind(this, this._getRemainingItemCount));
-        this.pack_end(this._loadMore.widget, false, false, 0);
-        this._loadMore.widget.connect("clicked", Lang.bind(this, this._populate))
+        this._populated = false;
+        this._offset_old = 0;
         this._connectView();
         this._populate();
     },
@@ -453,7 +399,6 @@ const AllArtistsAlbums = new Lang.Class({
         // if there's no vscrollbar, or if it's not visible, hide the button
         if (!vScrollbar ||
             !vScrollbar.get_visible()) {
-            this._loadMore.setBlock(true);
             return;
         }
 
@@ -469,11 +414,17 @@ const AllArtistsAlbums = new Lang.Class({
             end = !(value < (upper - page_size - revealAreaHeight));
         if (this._getRemainingItemCount() <= 0)
             end = false;
-        this._loadMore.setBlock(!end);
+        if (end && this._populated) {
+            if ((this._offset - this._offset_old) >= 5) {
+                this._offset_old = this._offset;
+                this._populate();
+            }
+        }
     },
 
 
     _populate: function () {
+        this._populated = false;
         if (grilo.tracker != null)
             grilo.populateAlbums (this._offset, Lang.bind(this,
                 function (source, param, item, remaining) {
@@ -482,6 +433,7 @@ const AllArtistsAlbums = new Lang.Class({
                         this.addAlbum(item);
                     }
                 }), 5);
+        this._populated = true;
     },
 
     _getRemainingItemCount: function () {let count = -1;

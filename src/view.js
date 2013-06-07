@@ -62,7 +62,9 @@ const ViewContainer = new Lang.Class({
         this._grid = new Gtk.Grid({orientation: Gtk.Orientation.VERTICAL})
         this._iconWidth = -1
         this._iconHeight = 128
+        this._populated = false;
         this._offset = 0;
+        this._offset_old = 0;
         this._adjustmentValueId = 0;
         this._adjustmentChangedId = 0;
         this._scrollbarVisibleId = 0;
@@ -98,9 +100,6 @@ const ViewContainer = new Lang.Class({
             this._grid.add(_box);
         }
 
-        this._loadMore = new Widgets.LoadMoreButton(this._getRemainingItemCount);
-        _box.pack_end(this._loadMore.widget, false, false, 0);
-        this._loadMore.widget.connect("clicked", Lang.bind(this, this.populate))
         this.view.connect('item-activated',
                             Lang.bind(this, this._onItemActivated));
         this._cursor = null;
@@ -110,7 +109,6 @@ const ViewContainer = new Lang.Class({
 
         this.show_all();
         this._items = [];
-        this._loadMore.widget.hide();
         this._connectView();
         this._symbolicIcon = albumArtCache.makeDefaultIcon(this._iconHeight, this._iconWidth);
 
@@ -159,7 +157,6 @@ const ViewContainer = new Lang.Class({
         // if there's no vscrollbar, or if it's not visible, hide the button
         if (!vScrollbar ||
             !vScrollbar.get_visible()) {
-            this._loadMore.setBlock(true);
             return;
         }
 
@@ -175,7 +172,12 @@ const ViewContainer = new Lang.Class({
             end = !(value < (upper - page_size - revealAreaHeight));
         if (this._getRemainingItemCount() <= 0)
             end = false;
-        this._loadMore.setBlock(!end);
+        if (end && this._populated) {
+            if ((this._offset - this._offset_old) >= 5) {
+                this._offset_old = this._offset;
+                this.populate();
+            }
+        }
     },
 
     populate: function() {
@@ -322,8 +324,10 @@ const Albums = new Lang.Class({
     },
 
     populate: function() {
+        this._populated = false;
         if (grilo.tracker != null)
             grilo.populateAlbums (this._offset, Lang.bind(this, this._addItem, null));
+        this._populated = true;
     },
 
 });
@@ -475,8 +479,10 @@ const Songs = new Lang.Class({
     },
 
     populate: function() {
+        this._populated = false;
         if (grilo.tracker != null)
             grilo.populateSongs (this._offset, Lang.bind(this, this._addItem, null));
+        this._populated = true;
     },
 
 });
@@ -594,9 +600,10 @@ const Artists = new Lang.Class({
     },
 
     populate: function () {
-        if(grilo.tracker != null) {
+        this._populated = false;
+        if(grilo.tracker != null)
             grilo.populateArtists(this._offset, Lang.bind(this, this._addItem, null));
             //FIXME: We're emitting this too early, need to wait for all artists to be filled in
-        }
+        this._populated = true;
     },
 });
