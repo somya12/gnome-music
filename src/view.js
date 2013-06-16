@@ -509,9 +509,11 @@ const Playlists = new Lang.Class({
 //        this._playlistSongsWidget.set_hexpand(true);
         let builder = new Gtk.Builder();
         builder.add_from_resource('/org/gnome/music/PlaylistSongs.ui');
-        this._playlistSongsWidget = builder.get_object('container');
+        this._playlistSongsWidget = builder.get_object('frame');
+        let container = builder.get_object('container');
+        this._playlistLabel = builder.get_object("playlist");
         this._songsListWidget = new Widgets.SongsList();
-        this._playlistSongsWidget.pack_end(this._songsListWidget, true, true, 0);
+        container.pack_end(this._songsListWidget, true, true, 0);
         this.view.get_style_context().add_class("artist-panel");
         this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
         builder.add_from_resource('/org/gnome/music/PlaylistControls.ui');
@@ -554,6 +556,7 @@ const Playlists = new Lang.Class({
     _onItemActivated: function (widget, id, path) {
         let iter = this._model.get_iter (path)[1];
         let playlist = this._model.get_value (iter, 0);
+        this._playlistLabel.set_text(playlist);
         let url = this._playlists[playlist.toLowerCase()]['url'];
         this._songsListWidget.update(url);
     },

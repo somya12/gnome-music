@@ -347,7 +347,6 @@ const SongsList = new Lang.Class({
     },
 
     update: function(playlistUrl) {
-        log(playlistUrl);
         this.playlist = playlistUrl;
         this._populate();
         this.show_all();
@@ -358,7 +357,6 @@ const SongsList = new Lang.Class({
         log("addItem Song: "+item);
         if (item == null)
             return;
-        log("Song: "+item);
         var iter = this._model.append();
         var song = "Unknown"
         if (item.get_string(Grl.METADATA_KEY_ARTIST) != null)
@@ -371,7 +369,6 @@ const SongsList = new Lang.Class({
 
     _populate: function() {
         if(grilo.filesystem != null) {
-            log('populate');
             grilo.getPlaylistSongs(this.playlist, Lang.bind(this, this._addItem, null));
         }
     }
