@@ -18,6 +18,7 @@
  *
  */
 
+const GLib = imports.gi.GLib;
 const Grl = imports.gi.Grl;
 const Lang = imports.lang;
 const Signals = imports.signals;
@@ -30,12 +31,20 @@ const Grilo = new Lang.Class({
     Name: 'Grilo',
 
     _init: function() {
+        this.playlistPath = GLib.build_filenamev([GLib.get_user_data_dir(), "gnome-music", "playlists"]);
+
         this.registry = Grl.Registry.get_default ();
+
+        let config = Grl.Config.new("grl-filesystem", "Filesystem");
+        config.set_string("base-path", this.playlistPath);
+        this.registry.add_config(config);
+
         this.registry.load_all_plugins();
 
         let sources = {};
         this.sources = sources;
         this.tracker = null;
+        this.filesystem = this.registry.lookup_source("grl-filesystem");
 
         this.registry.connect ("source_added",
             Lang.bind(this, this._onSourceAdded));
@@ -77,6 +86,22 @@ const Grilo = new Lang.Class({
         this.populateItems (Query.songs, offset, callback)
     },
 
+    populatePlaylists: function (offset, callback) {
+        var options = Grl.OperationOptions.new(null);
+        options.set_flags(Grl.ResolutionFlags.FULL | Grl.ResolutionFlags.IDLE_RELAY);
+        grilo.filesystem.get_media_from_uri(
+            GLib.filename_to_uri(this.playlistPath, null),
+            [Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_URL, Grl.METADATA_KEY_MIME],
+            options,
+            Lang.bind(this, function(source, id, media) {
+                grilo.filesystem.browse(
+                    media,
+                    [Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_URL, Grl.METADATA_KEY_MIME],
+                    options,
+                    Lang.bind(this, callback, null));
+            }));
+    },
+
     populateItems: function (query, offset, callback, count=50) {
         var options = Grl.OperationOptions.new(null);
         options.set_flags (Grl.ResolutionFlags.FULL | Grl.ResolutionFlags.IDLE_RELAY);
@@ -98,6 +123,22 @@ const Grilo = new Lang.Class({
                 [Grl.METADATA_KEY_ID, Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_ARTIST, Grl.METADATA_KEY_CREATION_DATE],
                 options,
                 Lang.bind(this, callback, null));
+    },
+
+    getPlaylistSongs: function (playlist_url, callback) {
+        var options = Grl.OperationOptions.new(null);
+        options.set_flags (Grl.ResolutionFlags.FULL | Grl.ResolutionFlags.IDLE_RELAY);
+        grilo.filesystem.get_media_from_uri(
+            playlist_url,
+            [Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_URL, Grl.METADATA_KEY_MIME],
+            options,
+            Lang.bind(this, function(source, id, media) {
+                grilo.filesystem.browse(
+                    media,
+                    [Grl.METADATA_KEY_ID, Grl.METADATA_KEY_TITLE, Grl.METADATA_KEY_ARTIST, Grl.METADATA_KEY_CREATION_DATE],
+                    options,
+                    Lang.bind(this, callback, null));
+            }));
     },
 
     _searchCallback: function search_cb () {

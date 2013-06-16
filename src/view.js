@@ -496,6 +496,7 @@ const Playlists = new Lang.Class({
 
     _init: function(header_bar, player) {
         this.parent("Playlists", header_bar);
+        this._playlist= {};
     },
 });
 
