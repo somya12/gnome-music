@@ -92,7 +92,7 @@ const MainWindow = new Lang.Class({
         this.connect("destroy",Lang.bind(this, function(){
             this._stack.disconnect(this._onNotifyModelId);
         }));
-  
+
         this.views[0].populate();
         }
         //To revert to the No Music View when no songs are found
@@ -108,11 +108,14 @@ const MainWindow = new Lang.Class({
     },
 
     _onNotifyMode: function(stack, param) {
-        // Slide out artist list on switching to artists view
+        // Slide out artist list on switching to artists view;
         if(stack.get_visible_child().title == "Artists"){
-            stack.get_visible_child().stack.set_visible_child_name("dummy")
-            stack.get_visible_child().stack.set_visible_child_name("artists")
-        }
+            stack.get_visible_child().stack.set_visible_child_name("dummy");
+            stack.get_visible_child().stack.set_visible_child_name("artists");
+        }/* else if(stack.get_visible_child.title == "Playlists"){
+            stack.get_visible_child().stack.set_visible_child_name("dummy");
+            stack.get_visible_child().stack.set_visible_child_name("playlists");
+        }*/
     },
 
     _toggleView: function(btn, i) {

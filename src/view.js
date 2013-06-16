@@ -496,7 +496,93 @@ const Playlists = new Lang.Class({
 
     _init: function(header_bar, player) {
         this.parent("Playlists", header_bar);
-        this._playlist= {};
+        this._playlists = {};
+        //this.countQuery = Query.playlist_count;
+/*        this._playlistSongsWidget = new Gtk.Frame({
+            shadow_type: Gtk.ShadowType.NONE
+        });
+        this.playlistSongs = new Widgets.PlaylistSongs(playlist, this.player);
+        this._playlistSongsWidget.add(this.playlistSongs);
+*/
+        this.view.set_view_type(Gd.MainViewType.LIST);
+        this.view.set_hexpand(false);
+//        this._playlistSongsWidget.set_hexpand(true);
+        let builder = new Gtk.Builder();
+        builder.add_from_resource('/org/gnome/music/PlaylistSongs.ui');
+        this._playlistSongsWidget = builder.get_object('container');
+        this._songsListWidget = new Widgets.SongsList();
+        this._playlistSongsWidget.pack_end(this._songsListWidget, true, true, 0);
+        this.view.get_style_context().add_class("artist-panel");
+        this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
+        builder.add_from_resource('/org/gnome/music/PlaylistControls.ui');
+        let controls = builder.get_object('playlistControls');
+        this._grid.attach(new Gtk.Separator(), 0, 1, 1, 1);
+        this._grid.attach(controls, 0, 2, 1, 1);
+        this._grid.attach(new Gtk.Separator({orientation: Gtk.Orientation.VERTICAL}), 1, 0, 1, 3);
+        this._grid.attach(this._playlistSongsWidget, 2, 0, 2, 2);
+        this._addListRenderers();
+        if(Gtk.Settings.get_default().gtk_application_prefer_dark_theme) {
+            this.view.get_generic_view().get_style_context().add_class("artist-panel-dark");
+            controls.get_style_context().add_class("playlist-controls-dark");
+        } else {
+            this.view.get_generic_view().get_style_context().add_class("artist-panel-white");
+            controls.get_style_context().add_class("playlist-controls-white");
+        }
+        this.show_all();
+    },
+
+    _addListRenderers: function() {
+        let listWidget = this.view.get_generic_view();
+
+        var cols = listWidget.get_columns()
+        var cells = cols[0].get_cells()
+        cells[2].visible = false
+
+        let typeRenderer =
+            new Gd.StyledTextRenderer({ xpad: 0 });
+        typeRenderer.ellipsize = 3;
+        typeRenderer.xalign = 0.0;
+        typeRenderer.yalign = 0.5;
+        typeRenderer.height = 48;
+        typeRenderer.width = 220;
+        listWidget.add_renderer(typeRenderer, Lang.bind(this,
+            function(col, cell, model, iter) {
+                typeRenderer.text = model.get_value(iter, 0);
+            }));
+    },
+
+    _onItemActivated: function (widget, id, path) {
+        let iter = this._model.get_iter (path)[1];
+        let playlist = this._model.get_value (iter, 0);
+        let url = this._playlists[playlist.toLowerCase()]['url'];
+        this._songsListWidget.update(url);
+    },
+
+    _addItem: function (source, param, item) {
+        this._offset += 1;
+        if (item == null)
+            return
+        var playlist = "Unknown"
+        if (item.get_title() != null)
+            playlist = item.get_title();
+        if (item.get_string(Grl.METADATA_KEY_TITLE) != null)
+            playlist = item.get_string(Grl.METADATA_KEY_TITLE)
+        var url = item.get_string(Grl.METADATA_KEY_URL)
+        if (this._playlists[playlist.toLowerCase()] == undefined) {
+            var iter = this._model.append();
+            this._playlists[playlist.toLowerCase()] = {"iter": iter, "url": url}
+            this._model.set(
+                iter,
+                [0, 1, 2, 3],
+                [playlist, playlist, playlist, playlist]
+            );
+        }
+    },
+
+    populate: function () {
+        if(grilo.tracker != null) {
+            grilo.populatePlaylists(this._offset, Lang.bind(this, this._addItem, null));
+        }
     },
 });
 

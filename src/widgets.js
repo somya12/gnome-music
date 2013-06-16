@@ -322,14 +322,105 @@ const AlbumWidget = new Lang.Class({
 });
 Signals.addSignalMethods(AlbumWidget.prototype);
 
+const SongsList = new Lang.Class({
+    Name: "SongsList",
+    Extends: Gd.MainView,
+
+    _init: function(){
+        this.parent();
+        this.playlist = null;
+        this._model = Gtk.ListStore.new([
+            GObject.TYPE_STRING,
+            GObject.TYPE_STRING,
+            GObject.TYPE_STRING,
+            GObject.TYPE_STRING,
+            GdkPixbuf.Pixbuf,
+            GObject.TYPE_OBJECT,
+            GObject.TYPE_BOOLEAN,
+            GObject.TYPE_STRING,
+            GObject.TYPE_BOOLEAN,
+            GObject.TYPE_BOOLEAN
+        ]);
+        this.set_view_type(Gd.MainViewType.ICON);
+        this.set_model(this._model);
+        this.show_all();
+    },
+
+    update: function(playlistUrl) {
+        log(playlistUrl);
+        this.playlist = playlistUrl;
+        this._populate();
+        this.show_all();
+    },
+
+    _addItem: function(source, param, item) {
+        this._offset += 1;
+        log("addItem Song: "+item);
+        if (item == null)
+            return;
+        log("Song: "+item);
+        var iter = this._model.append();
+        var song = "Unknown"
+        if (item.get_string(Grl.METADATA_KEY_ARTIST) != null)
+            song = item.get_string(Grl.METADATA_KEY_ARTIST)
+        if ((item.get_title() == null) && (item.get_url() != null)) {
+            song.set_title (extractFileName(item.get_url()));
+        }
+        this._model.set(iter, [0, 1, 2, 3], [song, song, song, song]);
+    },
+
+    _populate: function() {
+        if(grilo.filesystem != null) {
+            log('populate');
+            grilo.getPlaylistSongs(this.playlist, Lang.bind(this, this._addItem, null));
+        }
+    }
+
+});
+
+/*const PlaylistSongs = new Lang.Class({
+    Name: "PlaylistSongs",
+    Extends: Gtk.VBox,
+
+    _init: function (playlist, player) {
+        this.player = player;
+        this.playlist = playlist;
+        this.parent();
+        this.ui = new Gtk.Builder();
+        this.ui.add_from_resource('/org/gnome/music/ArtistAlbumsWidget.ui');
+        this.set_border_width(0);
+        this.ui.get_object("artist").set_label(this.playlist);
+        this.widgets = [];
+        this._vbox = new Gtk.VBox();
+        this._songsBox = new SongsList(this.playlist);
+        this._scrolledWindow = new Gtk.ScrolledWindow();
+        this._scrolledWindow.set_policy(
+            Gtk.PolicyType.NEVER,
+            Gtk.PolicyType.AUTOMATIC
+        );
+        this._scrolledWindow.add(this._vbox);
+        this._vbox.pack_start(this.ui.get_object("ArtistAlbumsWidget"), false, false, 0);
+        this._vbox.pack_start(this._songsBox, false, false, 16);
+        this.pack_start(this._scrolledWindow, true, true, 0);
+
+        this.show_all();
+    },
+
+    update: function(playlist) {
+        this._songsBox = null;
+        this._songsBox = new SongsList(playlist);
+    },
+
+});*/
+
 const ArtistAlbums = new Lang.Class({
     Name: "ArtistAlbumsWidget",
     Extends: Gtk.VBox,
 
     _init: function (artist, albums, player) {
-        this.player = player
-        this.artist = artist
-        this.albums = albums
+        this.player = player;
+        this.artist = artist;
+        this.albums = albums;
         this.parent();
         this.ui = new Gtk.Builder();
         this.ui.add_from_resource('/org/gnome/music/ArtistAlbumsWidget.ui');
