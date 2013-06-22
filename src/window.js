@@ -68,14 +68,13 @@ const MainWindow = new Lang.Class({
             transition_duration: 100,
             visible: true
         });
+        this._stack._searchBar = new Searchbar.Searchbar();
         this.toolbar.set_stack(this._stack);
-
-        this.toolbar._searchBar =  new Searchbar.Searchbar();
 
         this._stackOverlay = new Gtk.Overlay({ visible: true });
         this._stackOverlay.get_style_context().add_class('documents-scrolledwin');
         this._stackOverlay.add(this._stack);
-        this._stackOverlay.add_overlay(this.toolbar._searchBar.widget);
+        this._stackOverlay.add_overlay(this._stack._searchBar.widget);
 
         this._box.pack_start(this.toolbar, false, false, 0);
         this._box.pack_start(this._stackOverlay, true, true, 0);
@@ -98,13 +97,16 @@ const MainWindow = new Lang.Class({
                 this.views[i].title,
                 this.views[i].title
             );
+            this.views[i].filter.set_visible_func(
+                Lang.bind(this._stack._searchBar, this._stack._searchBar.setViewFilter));
         }
 
         this._onNotifyModelId = this._stack.connect("notify::visible-child", Lang.bind(this, this._onNotifyMode));
         this.connect("destroy",Lang.bind(this, function(){
             this._stack.disconnect(this._onNotifyModelId);
         }));
-  
+
+        this._stack._searchBar.view = this.views[0];
         this.views[0].populate();
         }
         //To revert to the No Music View when no songs are found
@@ -121,13 +123,11 @@ const MainWindow = new Lang.Class({
 
     _onNotifyMode: function(stack, param) {
         // Slide out artist list on switching to artists view
-        if(stack.get_visible_child().title == "Artists"){
-            stack.get_visible_child().stack.set_visible_child_name("dummy")
-            stack.get_visible_child().stack.set_visible_child_name("artists")
+        let view = stack.get_visible_child();
+        if(view.title == "Artists"){
+            view.stack.set_visible_child_name("dummy")
+            view.stack.set_visible_child_name("artists")
         }
-    },
-
-    _toggleView: function(btn, i) {
-        this._stack.set_visible_child(this.views[i])
+        stack._searchBar.view = view;
     },
 });

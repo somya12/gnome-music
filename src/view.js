@@ -66,7 +66,7 @@ const ViewContainer = new Lang.Class({
         this._adjustmentValueId = 0;
         this._adjustmentChangedId = 0;
         this._scrollbarVisibleId = 0;
-        this._model = Gtk.ListStore.new([
+        this._model = Gtk.TreeStore.new([
             GObject.TYPE_STRING,
             GObject.TYPE_STRING,
             GObject.TYPE_STRING,
@@ -83,7 +83,8 @@ const ViewContainer = new Lang.Class({
             shadow_type:    Gtk.ShadowType.NONE
         });
         this.view.set_view_type(Gd.MainViewType.ICON);
-        this.view.set_model(this._model);
+        this.filter = this._model.filter_new(null);
+        this.view.set_model(this.filter);
 
         let _box = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL});
         _box.pack_start(this.view, true, true, 0);
@@ -109,9 +110,9 @@ const ViewContainer = new Lang.Class({
         this.header_bar = header_bar;
         this.header_bar._searchButton.connect('toggled',Lang.bind(this,function (button) {
             if (button.get_active()) {
-                this.header_bar._searchBar.show()
+                this.header_bar.get_stack()._searchBar.show()
             } else {
-                this.header_bar._searchBar.hide()
+                this.header_bar.get_stack()._searchBar.hide()
             }
         }));
         this.header_bar._selectButton.connect('toggled',Lang.bind(this,function (button) {
@@ -202,7 +203,7 @@ const ViewContainer = new Lang.Class({
     _addItem: function(source, param, item) {
         if (item != null) {
             this._offset += 1;
-            var iter = this._model.append();
+            var iter = this._model.append(null);
             var artist = "Unknown"
             if (item.get_author() != null)
                 artist = item.get_author();
@@ -358,7 +359,7 @@ const Songs = new Lang.Class({
     _addItem: function(source, param, item) {
         if (item != null) {
             this._offset += 1;
-            var iter = this._model.append();
+            var iter = this._model.append(null);
             if ((item.get_title() == null) && (item.get_url() != null)) {
                 item.set_title (extractFileName(item.get_url()));
             }
@@ -509,7 +510,7 @@ const Artists = new Lang.Class({
     _populate: function(widget, param) {
         let selection = this.view.get_generic_view().get_selection();
         if (!selection.get_selected()[0]) {
-            this._allIter = this._model.append();
+            this._allIter = this._model.append(null);
             this._artists["All Artists".toLowerCase()] = {"iter": this._allIter, "albums": []};
             this._model.set(
                 this._allIter,
@@ -568,7 +569,7 @@ const Artists = new Lang.Class({
         if (item.get_string(Grl.METADATA_KEY_ARTIST) != null)
             artist = item.get_string(Grl.METADATA_KEY_ARTIST)
         if (this._artists[artist.toLowerCase()] == undefined) {
-            var iter = this._model.append();
+            var iter = this._model.append(null);
             this._artists[artist.toLowerCase()] = {"iter": iter, "albums": []}
             this._model.set(
             iter,

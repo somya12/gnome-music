@@ -28,6 +28,8 @@ const Searchbar = new Lang.Class({
     Name: "Searchbar",
 
     _init: function() {
+        this.view = null;
+
         let frame = new Gtk.Frame({ shadow_type: Gtk.ShadowType.IN,
                                     opacity: 0.9 });
         frame.get_style_context().add_class('documents-dropdown');
@@ -36,6 +38,7 @@ const Searchbar = new Lang.Class({
         frame.add(this._grid);
 
         this._searchEntry = new Gd.TaggedEntry();
+        this._searchEntry.connect("changed", Lang.bind(this, this.search_entry_changed));
         this._grid.add(this._searchEntry)
 
         this.widget = new Gtk.Revealer({ halign: Gtk.Align.CENTER,
@@ -44,6 +47,16 @@ const Searchbar = new Lang.Class({
 
         this.hide();
         this.widget.show_all();
+    },
+
+    setViewFilter: function(model, iter, user_data) {
+        if(this._searchEntry.visible){
+            let search_string = this._searchEntry.text.toLowerCase();
+            let name = model.get_value(iter,2);
+            if (name != null)
+                return name.toLowerCase().indexOf(search_string) > -1
+        }
+        return true;
     },
 
     _onItemActivated: function() {
@@ -56,6 +69,14 @@ const Searchbar = new Lang.Class({
 
     hide: function() {
         this.widget.reveal_child = false;
-    }
+    },
+
+    search_entry_changed: function() {
+        this.search_term = this._searchEntry.text;
+        if (this.view) {
+            this.view.filter.refilter();
+        }
+    },
+
 });
 Signals.addSignalMethods(Searchbar.prototype);
