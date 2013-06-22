@@ -29,6 +29,7 @@ const Gettext = imports.gettext;
 const _ = imports.gettext.gettext;
 
 const Toolbar = imports.toolbar;
+const Searchbar = imports.searchbar;
 const Views = imports.view;
 const Player = imports.player;
 const Query = imports.query;
@@ -69,8 +70,15 @@ const MainWindow = new Lang.Class({
         });
         this.toolbar.set_stack(this._stack);
 
+        this.toolbar._searchBar =  new Searchbar.Searchbar();
+
+        this._stackOverlay = new Gtk.Overlay({ visible: true });
+        this._stackOverlay.get_style_context().add_class('documents-scrolledwin');
+        this._stackOverlay.add(this._stack);
+        this._stackOverlay.add_overlay(this.toolbar._searchBar.widget);
+
         this._box.pack_start(this.toolbar, false, false, 0);
-        this._box.pack_start(this._stack, true, true, 0);
+        this._box.pack_start(this._stackOverlay, true, true, 0);
         this._box.pack_start(this.player.eventBox, false, false, 0);
         this.add(this._box);
         let count = -1;

@@ -30,8 +30,6 @@ const Signals = imports.signals;
 const Gettext = imports.gettext;
 const _ = imports.gettext.gettext;
 
-const Searchbar = imports.searchbar;
-
 const ToolbarState = {
     SINGLE: 0,
     ALBUMS: 1,
@@ -106,7 +104,7 @@ const Toolbar = new Lang.Class({
     },
 
     _addSearchButton: function() {
-        this._searchButton = new Gd.HeaderSimpleButton({ symbolic_icon_name: 'folder-saved-search-symbolic',
+        this._searchButton = new Gd.HeaderToggleButton({ symbolic_icon_name: 'folder-saved-search-symbolic',
                                                         label: _("Search") });
         this.pack_end(this._searchButton);
         this._searchButton.show();

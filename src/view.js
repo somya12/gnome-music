@@ -107,6 +107,13 @@ const ViewContainer = new Lang.Class({
                             Lang.bind(this, this._onItemActivated));
         this._cursor = null;
         this.header_bar = header_bar;
+        this.header_bar._searchButton.connect('toggled',Lang.bind(this,function (button) {
+            if (button.get_active()) {
+                this.header_bar._searchBar.show()
+            } else {
+                this.header_bar._searchBar.hide()
+            }
+        }));
         this.header_bar._selectButton.connect('toggled',Lang.bind(this,function (button) {
             if (button.get_active()) {
                 this.view.set_selection_mode(true);
