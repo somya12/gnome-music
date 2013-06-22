@@ -52,9 +52,18 @@ const Searchbar = new Lang.Class({
     setViewFilter: function(model, iter, user_data) {
         if(this._searchEntry.visible){
             let search_string = this._searchEntry.text.toLowerCase();
-            let name = model.get_value(iter,2);
-            if (name != null)
-                return name.toLowerCase().indexOf(search_string) > -1
+            let media = model.get_value(iter, 5);
+            let searchable_fields = [];
+            if (media && media.get_artist){
+                searchable_fields = [media.get_artist(), media.get_album(), media.get_title()]
+            } else {
+                searchable_fields = [model.get_value(iter, 2), model.get_value(iter, 3)]
+            }
+            for each(let field in searchable_fields){
+                if (field && field.toLowerCase().indexOf(search_string) > -1)
+                    return true;
+            }
+            return false;
         }
         return true;
     },
