@@ -26,31 +26,20 @@ const Signals = imports.signals;
 
 const Searchbar = new Lang.Class({
     Name: "Searchbar",
+    Extends: Gtk.SearchBar ,
 
     _init: function() {
+        this.parent({show_close_button: false});
         this.view = null;
-
-        let frame = new Gtk.Frame({ shadow_type: Gtk.ShadowType.IN,
-                                    opacity: 0.9 });
-        frame.get_style_context().add_class('documents-dropdown');
-
-        this._grid = new Gtk.Grid({ orientation: Gtk.Orientation.HORIZONTAL });
-        frame.add(this._grid);
-
-        this._searchEntry = new Gd.TaggedEntry();
+        this._searchEntry = new Gtk.SearchEntry();
+        this.connect_entry(this._searchEntry);
         this._searchEntry.connect("changed", Lang.bind(this, this.search_entry_changed));
-        this._grid.add(this._searchEntry)
-
-        this.widget = new Gtk.Revealer({ halign: Gtk.Align.CENTER,
-                                         valign: Gtk.Align.START });
-        this.widget.add(frame);
-
-        this.hide();
-        this.widget.show_all();
+        this._searchEntry.show();
+        this.add(this._searchEntry);
     },
 
     setViewFilter: function(model, iter, user_data) {
-        if(this._searchEntry.visible){
+        if (this._searchEntry.visible){
             let search_string = this._searchEntry.text.toLowerCase();
             let media = model.get_value(iter, 5);
             let searchable_fields = [];
@@ -70,14 +59,6 @@ const Searchbar = new Lang.Class({
 
     _onItemActivated: function() {
         this.emit('item-activated');
-    },
-
-    show: function() {
-        this.widget.reveal_child = true;
-    },
-
-    hide: function() {
-        this.widget.reveal_child = false;
     },
 
     search_entry_changed: function() {

@@ -24,7 +24,7 @@ const Gd = imports.gi.Gd;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Tracker = imports.gi.Tracker;
-
+const GObject = imports.gi.GObject;
 const Gettext = imports.gettext;
 const _ = imports.gettext.gettext;
 
@@ -110,13 +110,14 @@ const MainWindow = new Lang.Class({
         });
         this._stack._searchBar = new Searchbar.Searchbar();
         this.toolbar.set_stack(this._stack);
+        this._stack._searchBar.show();
+        this.toolbar._searchButton.bind_property("active", this._stack._searchBar, "search-mode-enabled", GObject.BindingFlags.BIDIRECTIONAL);
 
         this._stackOverlay = new Gtk.Overlay({ visible: true });
         this._stackOverlay.get_style_context().add_class('documents-scrolledwin');
         this._stackOverlay.add(this._stack);
-        this._stackOverlay.add_overlay(this._stack._searchBar.widget);
-
         this._box.pack_start(this.toolbar, false, false, 0);
+        this._box.pack_start(this._stack._searchBar, false, false, 0);
         this._box.pack_start(this._stackOverlay, true, true, 0);
         this._box.pack_start(this.player.eventBox, false, false, 0);
         this.add(this._box);
