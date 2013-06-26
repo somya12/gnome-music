@@ -632,3 +632,133 @@ const ArtistAlbumWidget = new Lang.Class({
 
 });
 Signals.addSignalMethods(ArtistAlbumWidget.prototype);
+
+const SongsList = new Lang.Class({
+    Name: "SongsList",
+    Extends: Gd.MainView,
+
+    _init: function(player){
+        this.parent();
+        this.set_shadow_type(Gtk.ShadowType.NONE);
+        this.player = player;
+        this.set_view_type(Gd.MainViewType.LIST);
+        this.get_generic_view().get_style_context().add_class("songs-list")
+        this._model = Gtk.ListStore.new([
+            GObject.TYPE_STRING,
+            GObject.TYPE_STRING,
+            GObject.TYPE_STRING,
+            GObject.TYPE_STRING,
+            GdkPixbuf.Pixbuf,
+            GObject.TYPE_OBJECT,
+            GObject.TYPE_BOOLEAN,
+            GObject.TYPE_STRING,
+            GObject.TYPE_BOOLEAN,
+            GObject.TYPE_BOOLEAN
+        ]);
+        this.set_model(this._model);
+        this._addListRenderers();
+        this.show_all();
+        this.connect('item-activated', Lang.bind(this, this._onItemActivated));
+        this.player.connect('playlist-item-changed', Lang.bind(this, this.updateModel));
+    },
+
+    updateModel: function(player, playlist, currentIter){
+        if (playlist != this._model){
+            return false;}
+        if (this.iterToClean){
+            this._model.set_value(this.iterToClean, 9, false);
+        }
+        this._model.set_value(currentIter, 9, true);
+        this.iterToClean = currentIter.copy();
+        return false;
+    },
+
+    _onItemActivated: function (widget, id, path) {
+        var iter = this._model.get_iter(path)[1]
+        if (this._model.get_value(iter, 7) != errorIconName) {
+            this.player.setPlaylist("Playlist", null, this._model, iter, 5);
+            this.player.setPlaying(true);
+        }
+    },
+
+    _addListRenderers: function() {
+        let listWidget = this.get_generic_view();
+        let cols = listWidget.get_columns();
+        let cells = cols[0].get_cells();
+        cells[2].visible = false;
+        let nowPlayingSymbolRenderer = new Gtk.CellRendererPixbuf();
+        var columnNowPlaying = new Gtk.TreeViewColumn();
+        nowPlayingSymbolRenderer.xalign = 1.0;
+        columnNowPlaying.pack_start(nowPlayingSymbolRenderer, false);
+        columnNowPlaying.fixed_width = 24;
+        columnNowPlaying.add_attribute(nowPlayingSymbolRenderer, "visible", 9);
+        columnNowPlaying.add_attribute(nowPlayingSymbolRenderer, "icon_name", 7);
+        listWidget.insert_column(columnNowPlaying, 0);
+
+        let titleRenderer = new Gtk.CellRendererText({ xpad: 0 });
+        listWidget.add_renderer(titleRenderer,Lang.bind(this,function (col,cell,model,iter) {
+            let item = model.get_value(iter,5);
+            titleRenderer.xalign = 0.0;
+            titleRenderer.yalign = 0.5;
+            titleRenderer.height = 48;
+            titleRenderer.ellipsize = Pango.EllipsizeMode.END;
+            titleRenderer.text = item.get_title();
+        }))
+        let starRenderer = new Gtk.CellRendererPixbuf({xpad: 32});
+        listWidget.add_renderer(starRenderer,Lang.bind(this,function (col,cell,model,iter) {
+            let showstar = model.get_value(iter,8);
+            if(showstar){
+            starRenderer.icon_name = starIconName;
+
+            }
+            else
+            starRenderer.pixbuf = null;
+        }))
+
+        let durationRenderer =
+            new Gd.StyledTextRenderer({ xpad: 32 });
+        durationRenderer.add_class('dim-label');
+        listWidget.add_renderer(durationRenderer, Lang.bind(this,
+            function(col, cell, model, iter) {
+                let item = model.get_value(iter, 5);
+                if (item) {
+                    let duration = item.get_duration ();
+                    var minutes = parseInt(duration / 60);
+                    var seconds = duration % 60;
+                    var time = null
+                    if (seconds < 10)
+                        time =  minutes + ":0" + seconds;
+                    else
+                        time = minutes + ":" + seconds;
+                    durationRenderer.xalign = 1.0;
+                    durationRenderer.text = time;
+                }
+            }));
+
+        let artistRenderer =
+            new Gd.StyledTextRenderer({ xpad: 32});
+        artistRenderer.add_class('dim-label');
+        artistRenderer.ellipsize = Pango.EllipsizeMode.END;
+        listWidget.add_renderer(artistRenderer, Lang.bind(this,
+            function(col, cell, model, iter) {
+                let item = model.get_value(iter, 5);
+                if (item) {
+                    artistRenderer.ellipsize = Pango.EllipsizeMode.END;
+                    artistRenderer.text = item.get_string(Grl.METADATA_KEY_ARTIST);
+                }
+            }));
+        let typeRenderer =
+            new Gd.StyledTextRenderer({ xpad: 32});
+        typeRenderer.add_class('dim-label');
+        typeRenderer.ellipsize = Pango.EllipsizeMode.END;
+        listWidget.add_renderer(typeRenderer, Lang.bind(this,
+            function(col, cell, model, iter) {
+                let item = model.get_value(iter, 5);
+                if (item) {
+                    typeRenderer.ellipsize = Pango.EllipsizeMode.END;
+                    typeRenderer.text = item.get_string(Grl.METADATA_KEY_ALBUM);
+                }
+            }));
+
+    },
+});
