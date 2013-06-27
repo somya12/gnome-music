@@ -477,18 +477,23 @@ const Playlists = new Lang.Class({
     _init: function(header_bar, player) {
         this.parent("Playlists", header_bar, true);
         this.player= player;
+        this._playlists = [];
         this.view.set_view_type(Gd.MainViewType.LIST);
         this.view.set_hexpand(false);
         this.view.get_style_context().add_class("artist-panel");
         this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
         this._songsListWidget = new Widgets.SongsList(this.player);
-        /*let builder = new Gtk.Builder();
+        let builder = new Gtk.Builder();
         builder.add_from_resource('/org/gnome/music/PlaylistControls.ui');
-        let controls = builder.get_object('container');*/
+        let controls = builder.get_object('container');
+        builder.add_from_resource('/org/gnome/music/PlaylistSongs.ui');
+        let songsFrame = builder.get_object('container');
+        let viewport = builder.get_object('viewport');
+        viewport.add(this._songsListWidget);
         this._grid.attach(new Gtk.Separator(), 0, 1, 1, 1);
         //this._grid.attach(controls, 0, 2, 1, 1);
         this._grid.attach(new Gtk.Separator({orientation: Gtk.Orientation.VERTICAL}), 1, 0, 1, 3);
-        this._grid.attach(this._songsListWidget, 2, 0, 2, 3);
+        this._grid.attach(songsFrame, 2, 0, 2, 3);
         this._addListRenderers();
         if(Gtk.Settings.get_default().gtk_application_prefer_dark_theme) {
             this.view.get_generic_view().get_style_context().add_class("artist-panel-dark");
@@ -539,7 +544,8 @@ const Playlists = new Lang.Class({
         var url = item.get_string(Grl.METADATA_KEY_URL)
         if (this._playlists[playlist.toLowerCase()] == undefined) {
             var iter = this._model.append();
-            this._playlists[playlist.toLowerCase()] = {"iter": iter, "url": url}
+            this._playlists[playlist.toLowerCase()] = {"iter": iter, "url": url, "songs": {}}
+            this.populatePlaylistSongs(playlist);
             this._model.set(
                 iter,
                 [0, 1, 2, 3],
@@ -553,4 +559,19 @@ const Playlists = new Lang.Class({
             grilo.populatePlaylists(this._offset, Lang.bind(this, this._addItem, null));
         }
     },
+
+    populatePlaylistSongs: function(playlist) {
+        if(grilo.filesystem != null) {
+            grilo.getPlaylistSongs(this._playlists[playlist.toLowerCase()]['url'], Lang.bind(this, 
+            function(source, param, item){
+                this._offset += 1;
+                if (item == null)
+                    return;
+                if ((item.get_title() == null) && (item.get_url() != null)) {
+                    song.set_title (extractFileName(item.get_url()));
+                }
+                this._playlists[playlist.toLowerCase()]['songs'].append(songs);
+            }, null));
+        }
+    }
 });
