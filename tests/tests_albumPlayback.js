@@ -4,10 +4,6 @@ if (!('assertEquals' in this)) { /* allow running this test standalone */
     gjstestRun = function() { return imports.jsUnit.gjstestRun(window); };
 }
 
-imports.searchPath.unshift('..');
-imports.searchPath.unshift('../src');
-imports.searchPath.unshift('../libgd');
-imports.searchPath.unshift('../data');
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Gdk = imports.gi.Gdk;
@@ -37,7 +33,7 @@ function getAlbumView() {
     let player = new Player.Player();
     let stack = new Gtk.Stack();
     toolbar.set_stack(stack);
-    view = new AlbumView(toolbar, player);
+    let view = new AlbumView(toolbar, player);
     stack.add_titled(view, "Albums", "Albums");
     stack.set_visible_child_name('Albums');
     return view;
