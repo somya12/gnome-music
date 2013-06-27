@@ -662,6 +662,12 @@ const SongsList = new Lang.Class({
         this.player.connect('playlist-item-changed', Lang.bind(this, this.updateModel));
     },
 
+    update: function(title, playlist) {
+        this.playlist = playlist;
+        this._model.clear();
+        this.show_all();
+    },
+
     updateModel: function(player, playlist, currentIter){
         if (playlist != this._model){
             return false;}
