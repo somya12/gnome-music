@@ -319,47 +319,13 @@ const Songs = new Lang.Class({
         this.countQuery = Query.songs_count;
         this._items = {};
         this.isStarred = null;
-<<<<<<< HEAD
         this.view = new Widgets.SongsList(player, this._model);
-=======
-        this.view = new Widgets.SongsList(player);
->>>>>>> 4411477b1930fb8bf0910e666c6d4c28b1c3080c
         this._iconHeight = 32;
         this._iconWidth = 32;
         this._symbolicIcon = albumArtCache.makeDefaultIcon(this._iconHeight, this._iconWidth)
         this.player = player;
     },
 
-<<<<<<< HEAD
-=======
-    _addItem: function(source, param, item) {
-        if (item != null) {
-            this._offset += 1;
-            var iter = this._model.append();
-            if ((item.get_title() == null) && (item.get_url() != null)) {
-                item.set_title (extractFileName(item.get_url()));
-            }
-            try{
-                if (item.get_url())
-                    this.player.discoverer.discover_uri(item.get_url());
-                this._model.set(
-                        iter,
-                        [5, 8, 9, 10],
-                        [item, nowPlayingIconName, false, false]
-                    );
-            } catch(err) {
-                log(err.message);
-                log("failed to discover url " + item.get_url());
-                this._model.set(
-                        iter,
-                        [5, 8, 9, 10],
-                        [item, errorIconName, false, true]
-                    );
-            }
-        }
-    },
-
->>>>>>> 4411477b1930fb8bf0910e666c6d4c28b1c3080c
     populate: function() {
         if (grilo.tracker != null)
             grilo.populateSongs (this._offset, Lang.bind(this, this.view.addItem, null));
@@ -489,30 +455,18 @@ const Playlists = new Lang.Class({
         this.view.set_hexpand(false);
         this.view.get_style_context().add_class("artist-panel");
         this.view.get_generic_view().get_selection().set_mode(Gtk.SelectionMode.SINGLE);
-<<<<<<< HEAD
         this._songsListWidget = new Widgets.SongsList(this.player, null);
         let builder = new Gtk.Builder();
         //builder.add_from_resource('/org/gnome/music/PlaylistControls.ui');
         //let controls = builder.get_object('container');
-=======
-        this._songsListWidget = new Widgets.SongsList(this.player);
-        let builder = new Gtk.Builder();
-        builder.add_from_resource('/org/gnome/music/PlaylistControls.ui');
-        let controls = builder.get_object('container');
->>>>>>> 4411477b1930fb8bf0910e666c6d4c28b1c3080c
         builder.add_from_resource('/org/gnome/music/PlaylistSongs.ui');
         let songsFrame = builder.get_object('container');
         let viewport = builder.get_object('viewport');
         viewport.add(this._songsListWidget);
         this._grid.attach(new Gtk.Separator(), 0, 1, 1, 1);
         //this._grid.attach(controls, 0, 2, 1, 1);
-<<<<<<< HEAD
         this._grid.attach(new Gtk.Separator({orientation: Gtk.Orientation.VERTICAL}), 1, 0, 1, 2);
         this._grid.attach(songsFrame, 2, 0, 2, 2);
-=======
-        this._grid.attach(new Gtk.Separator({orientation: Gtk.Orientation.VERTICAL}), 1, 0, 1, 3);
-        this._grid.attach(songsFrame, 2, 0, 2, 3);
->>>>>>> 4411477b1930fb8bf0910e666c6d4c28b1c3080c
         this._addListRenderers();
         if(Gtk.Settings.get_default().gtk_application_prefer_dark_theme) {
             this.view.get_generic_view().get_style_context().add_class("artist-panel-dark");
