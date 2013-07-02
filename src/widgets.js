@@ -637,34 +637,64 @@ const SongsList = new Lang.Class({
     Name: "SongsList",
     Extends: Gd.MainView,
 
-    _init: function(player){
+    _init: function(player, model){
         this.parent();
         this.set_shadow_type(Gtk.ShadowType.NONE);
         this.player = player;
         this.set_view_type(Gd.MainViewType.LIST);
         this.get_generic_view().get_style_context().add_class("songs-list")
-        this._model = Gtk.ListStore.new([
-            GObject.TYPE_STRING,
-            GObject.TYPE_STRING,
-            GObject.TYPE_STRING,
-            GObject.TYPE_STRING,
-            GdkPixbuf.Pixbuf,
-            GObject.TYPE_OBJECT,
-            GObject.TYPE_BOOLEAN,
-            GObject.TYPE_STRING,
-            GObject.TYPE_BOOLEAN,
-            GObject.TYPE_BOOLEAN
-        ]);
-        this.set_model(this._model);
+        this.model = model;
+        if (this.model == null) {
+            this.model = Gtk.ListStore.new([
+                GObject.TYPE_STRING,
+                GObject.TYPE_STRING,
+                GObject.TYPE_STRING,
+                GObject.TYPE_STRING,
+                GdkPixbuf.Pixbuf,
+                GObject.TYPE_OBJECT,
+                GObject.TYPE_BOOLEAN,
+                GObject.TYPE_STRING,
+                GObject.TYPE_BOOLEAN,
+                GObject.TYPE_BOOLEAN
+            ]);
+        }
+        this.set_model(this.model);
         this._addListRenderers();
         this.show_all();
         this.connect('item-activated', Lang.bind(this, this._onItemActivated));
         this.player.connect('playlist-item-changed', Lang.bind(this, this.updateModel));
     },
 
+    addItem: function(source, param, item) {
+        if (item != null) {
+            this._offset += 1;
+            var iter = this._model.append();
+            if ((item.get_title() == null) && (item.get_url() != null)) {
+                item.set_title (extractFileName(item.get_url()));
+            }
+            try{
+                if (item.get_url())
+                    this.player.discoverer.discover_uri(item.get_url());
+                this._model.set(
+                        iter,
+                        [5, 8, 9, 10],
+                        [item, nowPlayingIconName, false, false]
+                    );
+            } catch(err) {
+                log(err.message);
+                log("failed to discover url " + item.get_url());
+                this._model.set(
+                        iter,
+                        [5, 8, 9, 10],
+                        [item, errorIconName, false, true]
+                    );
+            }
+        }
+    },
+
     update: function(title, playlist) {
         this.playlist = playlist;
-        this._model.clear();
+        this.model.clear();
         this.show_all();
     },
 
@@ -680,9 +710,9 @@ const SongsList = new Lang.Class({
     },
 
     _onItemActivated: function (widget, id, path) {
-        var iter = this._model.get_iter(path)[1]
-        if (this._model.get_value(iter, 7) != errorIconName) {
-            this.player.setPlaylist("Playlist", null, this._model, iter, 5);
+        var iter = this.model.get_iter(path)[1]
+        if (this.model.get_value(iter, 7) != errorIconName) {
+            this.player.setPlaylist("Playlist", null, this.model, iter, 5);
             this.player.setPlaying(true);
         }
     },
