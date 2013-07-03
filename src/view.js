@@ -319,11 +319,10 @@ const Songs = new Lang.Class({
         this.countQuery = Query.songs_count;
         this._items = {};
         this.isStarred = null;
+        this._grid.remove(this.view);
         this.view = new Widgets.SongsList(player, this._model);
-        this._iconHeight = 32;
-        this._iconWidth = 32;
-        this._symbolicIcon = albumArtCache.makeDefaultIcon(this._iconHeight, this._iconWidth)
         this.player = player;
+        this._grid.add(this.view);
     },
 
     populate: function() {

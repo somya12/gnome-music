@@ -38,6 +38,7 @@ const albumArtCache = AlbumArtCache.AlbumArtCache.getDefault();
 
 const nowPlayingIconName = 'media-playback-start-symbolic';
 const errorIconName = 'dialog-error-symbolic';
+const starIconName = 'starred-symbolic';
 
 const LoadMoreButton = new Lang.Class({
     Name: 'LoadMoreButton',
@@ -643,6 +644,9 @@ const SongsList = new Lang.Class({
         this.player = player;
         this.set_view_type(Gd.MainViewType.LIST);
         this.get_generic_view().get_style_context().add_class("songs-list")
+        this.countQuery = Query.songs_count;
+        this._items = {};
+        this.isStarred = null;
         this.model = model;
         if (this.model == null) {
             this.model = Gtk.ListStore.new([
@@ -659,6 +663,9 @@ const SongsList = new Lang.Class({
             ]);
         }
         this.set_model(this.model);
+        this._iconHeight = 32;
+        this._iconWidth = 32;
+        this._symbolicIcon = albumArtCache.makeDefaultIcon(this._iconHeight, this._iconWidth)
         this._addListRenderers();
         this.show_all();
         this.connect('item-activated', Lang.bind(this, this._onItemActivated));
