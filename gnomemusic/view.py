@@ -195,10 +195,12 @@ class ViewContainer(Stack):
 
         GLib.idle_add(add_new_item)
 
-    def _insert_album_art(self, item, cb_item, itr, x=False):
-        if item and cb_item and not item.get_thumbnail():
-            if cb_item.get_thumbnail():
-                item.set_thumbnail(cb_item.get_thumbnail())
+    def _insert_album_art(self, source, op_id, item, itr, error):
+        if error:
+            return
+
+        thumbnail = item.get_thumbnail()
+        if thumbnail:
             albumArtCache.get_default().lookup(
                 item,
                 self._iconWidth,
@@ -206,11 +208,7 @@ class ViewContainer(Stack):
                 self._on_lookup_ready, itr)
 
     def _update_album_art(self, item, itr):
-        grilo.get_album_art_for_album_id(
-            item.get_id(),
-            lambda source, count, cb_item, x, y, z:
-            self._insert_album_art(item, cb_item, itr, True)
-        )
+        grilo.get_album_art_for_album(item, self._insert_album_art, itr)
 
     def _on_lookup_ready(self, icon, path, _iter):
         if icon:

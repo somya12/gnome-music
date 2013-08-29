@@ -37,23 +37,35 @@ class Grilo(GObject.GObject):
         'ready': (GObject.SIGNAL_RUN_FIRST, None, ())
     }
 
+    # Note that we ask for thumbnail in the first query too,
+    # but since we don't pass the Grl.ResolutionFlags.FULL,
+    # we only get a result if tracker has it readily available
+    # (usually it's not, because it requires tracker compiled
+    # with UPnP support)
+    # In any case, we'll proceed to fetch the thumbnail later
+    # by resolving the item, through grl-local-metadata or
+    # grl-lastfm-albumart
     METADATA_KEYS = [
         Grl.METADATA_KEY_ID, Grl.METADATA_KEY_TITLE,
         Grl.METADATA_KEY_ARTIST, Grl.METADATA_KEY_ALBUM,
         Grl.METADATA_KEY_DURATION,
-        Grl.METADATA_KEY_CREATION_DATE]
+        Grl.METADATA_KEY_CREATION_DATE,
+        Grl.METADATA_KEY_THUMBNAIL
+    ]
 
     METADATA_THUMBNAIL_KEYS = [
         Grl.METADATA_KEY_ID,
-        Grl.METADATA_KEY_THUMBNAIL,
+        Grl.METADATA_KEY_THUMBNAIL
     ]
 
     def __init__(self):
         GObject.GObject.__init__(self)
 
-        self.options = Grl.OperationOptions()
-        self.options.set_flags(Grl.ResolutionFlags.FULL |
-                               Grl.ResolutionFlags.IDLE_RELAY)
+        self.fast_options = Grl.OperationOptions()
+        self.fast_options.set_flags(Grl.ResolutionFlags.IDLE_RELAY)
+        self.full_options = Grl.OperationOptions()
+        self.full_options.set_flags(Grl.ResolutionFlags.FULL |
+                                    Grl.ResolutionFlags.IDLE_RELAY)
 
         self.registry = Grl.Registry.get_default()
         try:
@@ -96,8 +108,8 @@ class Grilo(GObject.GObject):
     def populate_album_songs(self, album_id, callback):
         self.populate_items(Query.album_songs(album_id), 0, callback)
 
-    def populate_items(self, query, offset, callback):
-        options = self.options.copy()
+    def populate_items(self, query, offset, callback, count=50):
+        options = self.fast_options.copy()
         options.set_skip(offset)
 
         def _callback(source, param, item, count, data, offset):
@@ -108,16 +120,14 @@ class Grilo(GObject.GObject):
         print('yeah')
 
     def search(self, q):
-        options = self.options.copy()
         for source in self.sources:
             print(source.get_name() + ' - ' + q)
             source.search(q, [Grl.METADATA_KEY_ID], 0, 10,
-                          options, self._search_callback, source)
+                          self.fast_options, self._search_callback, source)
 
-    def get_album_art_for_album_id(self, album_id, _callback):
-        options = self.options.copy()
-        query = Query.get_album_for_id(album_id)
-        self.tracker.query(query, self.METADATA_THUMBNAIL_KEYS, options, _callback, None)
+    def get_album_art_for_album(self, album, _callback, data):
+        self.tracker.resolve(album, self.METADATA_THUMBNAIL_KEYS,
+                             self.full_options, _callback, data)
 
 Grl.init(None)
 
