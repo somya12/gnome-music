@@ -42,7 +42,6 @@ from gi.repository import Tracker
 from gettext import gettext as _
 from gnomemusic.grilo import grilo
 import gnomemusic.widgets as Widgets
-from gnomemusic.query import Query
 from gnomemusic.albumArtCache import AlbumArtCache as albumArtCache
 tracker = Tracker.SparqlConnection.get(None)
 
@@ -59,7 +58,6 @@ class ViewContainer(Stack):
         nowPlayingIconName = 'media-playback-start-rtl-symbolic'
     errorIconName = 'dialog-error-symbolic'
     starIconName = 'starred-symbolic'
-    countQuery = None
 
     def __init__(self, title, header_bar, selection_toolbar, useStack=False):
         Stack.__init__(self,
@@ -89,7 +87,6 @@ class ViewContainer(Stack):
         )
         self.view.set_view_type(Gd.MainViewType.ICON)
         self.view.set_model(self._model)
-        self.vadjustment = self.view.get_vadjustment()
         self.selection_toolbar = selection_toolbar
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         box.pack_start(self.view, True, True, 0)
@@ -105,10 +102,6 @@ class ViewContainer(Stack):
         else:
             self._grid.add(box)
 
-        self._cached_count = -1
-        self._loadMore = Widgets.LoadMoreButton(self._get_remaining_item_count)
-        box.pack_end(self._loadMore.widget, False, False, 0)
-        self._loadMore.widget.connect('clicked', self._populate)
         self.view.connect('item-activated', self._on_item_activated)
         self._cursor = None
         self.header_bar = header_bar
@@ -122,8 +115,6 @@ class ViewContainer(Stack):
 
         self.show_all()
         self._items = []
-        self._loadMore.widget.hide()
-        self._connect_view()
         self.cache = albumArtCache.get_default()
         self._symbolicIcon = self.cache.make_default_icon(self._iconHeight,
                                                           self._iconWidth)
@@ -134,11 +125,6 @@ class ViewContainer(Stack):
                                            self._on_state_changed)
         self.view.connect('view-selection-changed',
                           self._on_view_selection_changed)
-
-    def _get_remaining_item_count(self):
-        if self._cached_count < 0:
-            self._cached_count = Widgets.get_count(self.countQuery)
-        return self._cached_count - self._offset
 
     def _on_header_bar_toggled(self, button):
         if button.get_active():
@@ -177,34 +163,6 @@ class ViewContainer(Stack):
 
     def _on_state_changed(self, widget, data=None):
         pass
-
-    def _connect_view(self):
-        self._adjustmentValueId = self.vadjustment.connect(
-            'value-changed',
-            self._on_scrolled_win_change)
-
-    def _on_scrolled_win_change(self, data=None):
-        vScrollbar = self.view.get_vscrollbar()
-        revealAreaHeight = 32
-
-        #if there's no vscrollbar, or if it's not visible, hide the button
-        if not vScrollbar or not vScrollbar.get_visible():
-            self._loadMore.set_block(True)
-            return
-
-        value = self.vadjustment.get_value()
-        upper = self.vadjustment.get_upper()
-        page_size = self.vadjustment.get_page_size()
-
-        end = False
-        #special case self values which happen at construction
-        if (value == 0) and (upper == 1) and (page_size == 1):
-            end = False
-        else:
-            end = not (value < (upper - page_size - revealAreaHeight))
-        if self._get_remaining_item_count() <= 0:
-            end = False
-        self._loadMore.set_block(not end)
 
     def populate(self):
         print('populate')
@@ -277,7 +235,7 @@ class Empty(Stack):
         music_folder_path = GLib.get_user_special_dir(GLib.USER_DIRECTORY_MUSIC)
         widget = builder.get_object('container')
         label = builder.get_object('label1')
-        label.set_label(_("No Music found!\n Put some files into the folder %s" %music_folder_path))
+        label.set_label(_("No Music found!\n Put some files into the folder %s" % music_folder_path))
         self.add(widget)
         self.show_all()
 
@@ -287,7 +245,6 @@ class Albums(ViewContainer):
         ViewContainer.__init__(self, _("Albums"), header_bar,
                                selection_toolbar)
         self.view.set_view_type(Gd.MainViewType.ICON)
-        self.countQuery = Query.ALBUMS_COUNT
         self._albumWidget = Widgets.AlbumWidget(player)
         self.add(self._albumWidget)
 
@@ -315,7 +272,6 @@ class Albums(ViewContainer):
 class Songs(ViewContainer):
     def __init__(self, header_bar, selection_toolbar, player):
         ViewContainer.__init__(self, _("Songs"), header_bar, selection_toolbar)
-        self.countQuery = Query.SONGS_COUNT
         self._items = {}
         self.isStarred = None
         self.iter_to_clean = None
@@ -470,7 +426,6 @@ class Artists (ViewContainer):
         self.artists_counter = 0
         self.player = player
         self._artists = {}
-        self.countQuery = Query.ARTISTS_COUNT
         self.artistAlbumsStack = Stack(
             transition_type=StackTransitionType.CROSSFADE,
         )

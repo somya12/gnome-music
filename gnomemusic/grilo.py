@@ -87,20 +87,18 @@ class Grilo(GObject.GObject):
     def populate_artists(self, offset, callback):
         self.populate_items(Query.ARTISTS, offset, callback)
 
-    def populate_albums(self, offset, callback, count=50):
-        self.populate_items(Query.ALBUMS, offset, callback, count)
+    def populate_albums(self, offset, callback):
+        self.populate_items(Query.ALBUMS, offset, callback)
 
-    def populate_songs(self, offset, callback, count=-1):
-        self.populate_items(Query.SONGS, offset, callback, count)
+    def populate_songs(self, offset, callback):
+        self.populate_items(Query.SONGS, offset, callback)
 
     def populate_album_songs(self, album_id, callback):
         self.populate_items(Query.album_songs(album_id), 0, callback)
 
-    def populate_items(self, query, offset, callback, count=50):
+    def populate_items(self, query, offset, callback):
         options = self.options.copy()
         options.set_skip(offset)
-        if count != -1:
-            options.set_count(count)
 
         def _callback(source, param, item, count, data, offset):
             callback(source, param, item)
