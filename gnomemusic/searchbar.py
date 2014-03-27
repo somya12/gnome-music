@@ -31,6 +31,7 @@ class Searchbar(Gd.Revealer):
             artist = _("Unknown Artist")
             album = _("Unknown Album")
             if media and media.get_url():
+                print("media is %s with url %s" % (media, media.get_url())
                 if media.get_artist() is not None:
                     artist = media.get_artist()
                 if media.get_album() is not None:
